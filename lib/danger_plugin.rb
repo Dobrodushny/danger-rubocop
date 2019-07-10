@@ -36,7 +36,7 @@ module Danger
       report_json = config[:json_file] ? File.read(config[:json_file]) : json_from_output(config[:files])
       files_to_report = files_from_json(report_json)
 
-      message("Rubocop didn't detect any offences") if files_to_report.empty?
+      return message("Rubocop didn't detect any offences") if files_to_report.empty?
       # return report_failures(files_to_report) if report_danger
 
       if inline_comment
