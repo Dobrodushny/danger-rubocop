@@ -28,15 +28,12 @@ module Danger
     #
     def lint(config = nil)
       config = config.is_a?(Hash) ? config : { files: config }
-      files = config[:files]
-      force_exclusion = config[:force_exclusion] || false
 
       report_danger = config[:report_danger] || false
       inline_comment = config[:inline_comment] || false
       fail_on_inline_comment = config[:fail_on_inline_comment] || false
 
-      files_to_lint = fetch_files_to_lint(files)
-      files_to_report = rubocop(files_to_lint, force_exclusion)
+      files_to_report = config[:json_file] ? files_from_json(config[:json_file]) : json_from_output(config[:files])
 
       return if files_to_report.empty?
       return report_failures files_to_report if report_danger
@@ -46,10 +43,15 @@ module Danger
       else
         markdown offenses_message(files_to_report)
       end
-
     end
 
     private
+
+    def json_from_output(files)
+      force_exclusion = config[:force_exclusion] || false
+      files_to_lint = fetch_files_to_lint(files)
+      rubocop(files_to_lint, force_exclusion)
+    end
 
     def rubocop(files_to_lint, force_exclusion)
       base_command = 'rubocop -f json'
@@ -57,10 +59,11 @@ module Danger
 
       rubocop_output = `#{'bundle exec ' if File.exist?('Gemfile')}#{base_command} #{files_to_lint}`
 
-      return [] if rubocop_output.empty?
+      rubocop_output.empty? ? [] : rubocop_output
+    end
 
-      JSON.parse(rubocop_output)['files']
-        .select { |f| f['offenses'].any? }
+    def files_from_json(json)
+      JSON.parse(rubocop_output)['files'].select { |f| f['offenses'].any? }
     end
 
     def offenses_message(offending_files)
