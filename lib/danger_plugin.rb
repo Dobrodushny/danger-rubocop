@@ -33,7 +33,8 @@ module Danger
       inline_comment = config[:inline_comment] || false
       fail_on_inline_comment = config[:fail_on_inline_comment] || false
 
-      files_to_report = config[:json_file] ? files_from_json(config[:json_file]) : json_from_output(config[:files])
+      report_json = config[:json_file] ? File.read(config[:json_file]) : json_from_output(config[:files])
+      files_to_report = files_from_json(report_json)
 
       return if files_to_report.empty?
       return report_failures files_to_report if report_danger
@@ -63,7 +64,7 @@ module Danger
     end
 
     def files_from_json(json)
-      JSON.parse(rubocop_output)['files'].select { |f| f['offenses'].any? }
+      JSON.parse(json)['files'].select { |f| f['offenses'].any? }
     end
 
     def offenses_message(offending_files)
