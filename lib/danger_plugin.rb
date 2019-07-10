@@ -36,12 +36,13 @@ module Danger
       report_json = config[:json_file] ? File.read(config[:json_file]) : json_from_output(config[:files])
       files_to_report = files_from_json(report_json)
 
-      return if files_to_report.empty?
-      return report_failures files_to_report if report_danger
+      message("Rubocop didn't detect any offences") if files_to_report.empty?
+      # return report_failures(files_to_report) if report_danger
 
       if inline_comment
         add_violation_for_each_line(files_to_report, fail_on_inline_comment)
       else
+        failure("Rubocop detected #{files_to_report.count} offence(s)") if report_danger
         markdown offenses_message(files_to_report)
       end
     end
